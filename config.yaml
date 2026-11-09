@@ -18,8 +18,8 @@ tracking:
   departure_timeout: 300
 
 recognition:
-  confidence_threshold: 0.8
-  plugin: "app.recognition.easyocr_recognizer:EasyOCRRecognizer"
+  confidence_threshold: 0.8  
+  plugin: "app.recognition.qwenlocalrecognizer:OllamaRecognizer"
 
 telegram:
   enabled: false

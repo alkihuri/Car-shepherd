@@ -14,7 +14,7 @@ from app.tracking.vehicle_tracker import VehicleTracker
 _INDEX = """<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Detailing Centre Monitor</title>
+<title>ДЕТЕЙЛИНГ ЦЕНТР</title>
 <style>
 body{font:16px sans-serif;margin:2rem;color:#222}h1{margin-top:0}
 .cameras{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
