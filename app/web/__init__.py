@@ -1,0 +1,1 @@
+"""Local monitoring web interface."""

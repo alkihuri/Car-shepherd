@@ -1,0 +1,1 @@
+"""Detailing-centre surveillance application."""
