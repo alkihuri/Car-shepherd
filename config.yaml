@@ -7,12 +7,7 @@ cameras:
     name: "Detailing Camera 1"
     enabled: true
     scan_interval: 30
-    stream_url: "${CAMERA_01_RTSP_URL}"
-  - id: "camera_02"
-    name: "Detailing Camera 2"
-    enabled: true
-    scan_interval: 30
-    stream_url: "${CAMERA_02_RTSP_URL}"
+    stream_url: "${CAMERA_01_RTSP_URL}" 
 
 google:
   apps_script_url: "${GOOGLE_APPS_SCRIPT_URL}"
@@ -24,7 +19,7 @@ tracking:
 
 recognition:
   confidence_threshold: 0.8
-  plugin: ""
+  plugin: "easyocr"
 
 telegram:
   enabled: false

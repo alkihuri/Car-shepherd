@@ -97,6 +97,10 @@ def load_config(path: str | Path = "config.yaml") -> AppConfig:
     config_path = Path(path)
     _load_dotenv(config_path.parent / ".env")
     data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+
+    #debug print loaded data
+    print("DATA CONFIG:", data)
+
     return AppConfig.model_validate(_expand_env(data))
 
 
