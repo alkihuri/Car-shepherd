@@ -19,7 +19,7 @@ tracking:
 
 recognition:
   confidence_threshold: 0.8
-  plugin: "easyocr"
+  plugin: "app.recognition.easyocr_recognizer:EasyOCRRecognizer"
 
 telegram:
   enabled: false
