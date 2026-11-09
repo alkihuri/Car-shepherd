@@ -19,16 +19,9 @@ class OllamaRecognizer:
         self.model = model
         self.url = f"http://{host}:{port}/api/chat"
         self.timeout = timeout
-        self.prompt = (
-            "You are a license plate recognition system. "
-            "Look at the image and identify: "
-            "1) the license plate number (letters and digits only, no spaces), "
-            "2) the car make and model if visible. "
-            "Reply ONLY with a JSON object, no markdown, no explanations, in this format: "
-            '{"plate_number": "ABC123", "car_make": "Toyota", "car_model": "Camry", "confidence": 0.0} '
-            "If you cannot read the plate, set plate_number to null and confidence to 0.0. "
-            "confidence must be a number between 0.0 and 1.0 reflecting how certain you are."
-        )
+        self.prompt = ( 
+ " Are there any cars? if yes describe each car with make, model, color, plate, and people nearby. Reply ONLY with a JSON array, no markdown, no explanations. Format: [{ plate_number : ABC123 or EMPTY , car_make : Toyota or unknown , car_model : Camry or unknown , people_nearby : false, color : white , people_nearby : false, confidence : 0.0}] confidence is a number between 0.0 and 1.0 reflecting how certain you are about the plate."
+)
 
     def _encode_image(self, image: np.ndarray) -> str:
         ok, buffer = cv2.imencode(".jpg", image, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
@@ -69,6 +62,7 @@ class OllamaRecognizer:
 
         data = response.json()
         raw_answer = data.get("message", {}).get("content", "").strip()   # ✅
+        print(f"[OllamaRecognizer] Raw answer: {raw_answer}")
         if not raw_answer:
             return []
 
