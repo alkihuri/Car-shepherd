@@ -1,10 +1,10 @@
 function doGet(e) {
   try {
     const request = e && e.parameter ? e.parameter : {};
-    authorize_(request.token);
-    if (request.action === "get_current_cars") {
-      return jsonResponse_({ cars: getCurrentCars_() });
-    }
+    //authorize_(request.token);
+   // if (request.action === "get_current_cars") {
+   //   return jsonResponse_({ cars: getCurrentCars_() });
+   // }
     if (request.action === "get_config") {
       return jsonResponse_({ config: getConfig_() });
     }
@@ -17,7 +17,7 @@ function doGet(e) {
 function doPost(e) {
   try {
     const request = JSON.parse((e && e.postData && e.postData.contents) || "{}");
-    authorize_(request.token);
+  //  authorize_(request.token);
     if (request.action === "get_current_cars") {
       return jsonResponse_({ cars: getCurrentCars_() });
     }
