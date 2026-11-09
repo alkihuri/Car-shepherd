@@ -52,7 +52,7 @@ class TelegramNotificationService:
             if response.json().get("ok") is not True:
                 raise RuntimeError("Telegram API returned an unsuccessful response")
         except (httpx.HTTPError, ValueError, RuntimeError) as error:
-            logger.error("Telegram notification failed: %s", error)
+            logger.error("Telegram notification failed (%s)", type(error).__name__)
 
     async def on_arrived(self, event: CarArrived) -> None:
         if not self.settings.notify_on_arrival:

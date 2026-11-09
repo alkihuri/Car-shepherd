@@ -8,6 +8,7 @@ from app.core.config import CameraConfig
 
 class CameraManager:
     def __init__(self, cameras: list[CameraConfig]) -> None:
+        self.scan_intervals = {camera.id: camera.scan_interval for camera in cameras}
         self.readers = {
             camera.id: StreamReader(camera.id, camera.name, camera.stream_url, camera.enabled)
             for camera in cameras
@@ -23,7 +24,7 @@ class CameraManager:
         return {
             camera_id: frame
             for camera_id, reader in self.readers.items()
-            if (frame := reader.get_frame()) is not None
+            if reader.status().connected and (frame := reader.get_frame()) is not None
         }
 
     def statuses(self) -> list[CameraStatus]:

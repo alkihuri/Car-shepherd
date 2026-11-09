@@ -65,7 +65,19 @@ class StreamReader:
                 logger.error("Camera %s has no configured stream URL", self.camera_id)
                 self._stop.wait(5)
                 continue
-            capture = cv2.VideoCapture(self.stream_url)
+            try:
+                capture = cv2.VideoCapture(
+                    self.stream_url,
+                    cv2.CAP_FFMPEG,
+                    [
+                        cv2.CAP_PROP_OPEN_TIMEOUT_MSEC,
+                        5000,
+                        cv2.CAP_PROP_READ_TIMEOUT_MSEC,
+                        5000,
+                    ],
+                )
+            except (TypeError, cv2.error):
+                capture = cv2.VideoCapture(self.stream_url)
             capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             if not capture.isOpened():
                 with self._lock:

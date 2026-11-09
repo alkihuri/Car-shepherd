@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import inspect
+import logging
 from collections import defaultdict
 from collections.abc import Callable
 from typing import Any
 
 
 EventHandler = Callable[[Any], Any]
+logger = logging.getLogger(__name__)
 
 
 class EventDispatcher:
@@ -20,6 +22,9 @@ class EventDispatcher:
         for event_type, handlers in self._handlers.items():
             if isinstance(event, event_type):
                 for handler in tuple(handlers):
-                    result = handler(event)
-                    if inspect.isawaitable(result):
-                        await result
+                    try:
+                        result = handler(event)
+                        if inspect.isawaitable(result):
+                            await result
+                    except Exception:
+                        logger.exception("Event handler failed for %s", type(event).__name__)

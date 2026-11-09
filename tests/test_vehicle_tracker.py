@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from app.core.event_dispatcher import EventDispatcher
 from app.events.event_models import CarArrived, CarDetected, CarLeft
-from app.tracking.vehicle import Detection
+from app.tracking.vehicle import Detection, Vehicle
 from app.tracking.vehicle_tracker import VehicleTracker
 
 
@@ -50,3 +50,17 @@ def test_tracker_pauses_departures_when_all_cameras_are_unavailable() -> None:
     asyncio.run(tracker.update([], {"north"}, now + timedelta(minutes=5)))
     assert tracker.current_vehicles == ()
     assert sum(isinstance(event, CarLeft) for event in events) == 1
+
+
+def test_tracker_can_restore_current_vehicle_without_emitting_arrival() -> None:
+    dispatcher = EventDispatcher()
+    events: list[object] = []
+    dispatcher.subscribe(CarArrived, events.append)
+    tracker = VehicleTracker(dispatcher)
+    seen = datetime.now(timezone.utc)
+    tracker.restore(Vehicle("ab123cd", seen, seen, {"front"}))
+
+    asyncio.run(tracker.update([Detection("AB123CD", 0.9, "front")], {"front"}, seen))
+
+    assert tracker.current_vehicles[0].plate_number == "AB123CD"
+    assert not events

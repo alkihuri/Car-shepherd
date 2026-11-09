@@ -28,13 +28,14 @@ th,td{text-align:left;padding:.5rem;border-bottom:1px solid #ddd}
 <tbody id="cars"></tbody></table>
 <script>
 const fmt=v=>v?new Date(v).toLocaleString():"—";
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function refresh(){
  const [cameras,cars]=await Promise.all([fetch('/api/cameras').then(r=>r.json()),fetch('/api/cars').then(r=>r.json())]);
- document.querySelector('#cameras').innerHTML=cameras.map(c=>`<article><h3>${c.name}</h3>
+ document.querySelector('#cameras').innerHTML=cameras.map(c=>`<article><h3>${esc(c.name)}</h3>
  <p class="${c.connected?'online':'offline'}">${c.connected?'Connected':'Disconnected'} · Last frame: ${fmt(c.last_frame_at)}</p>
- ${c.enabled?`<img src="/video/${encodeURIComponent(c.camera_id)}" alt="${c.name} stream">`:'<p>Disabled</p>'}</article>`).join('');
+ ${c.enabled?`<img src="/video/${encodeURIComponent(c.camera_id)}" alt="${esc(c.name)} stream">`:'<p>Disabled</p>'}</article>`).join('');
  document.querySelector('#count').textContent=`${cars.length} car(s) on site`;
- document.querySelector('#cars').innerHTML=cars.map(c=>`<tr><td>${c.plate_number}</td><td>${c.vehicle_make||'—'}</td>
+ document.querySelector('#cars').innerHTML=cars.map(c=>`<tr><td>${esc(c.plate_number)}</td><td>${esc(c.vehicle_make)||'—'}</td>
  <td>${fmt(c.first_seen)}</td><td>${fmt(c.last_seen)}</td><td>${Math.max(0,Math.floor((Date.now()-new Date(c.first_seen))/60000))} min</td></tr>`).join('');
 }
 refresh();setInterval(refresh,5000);

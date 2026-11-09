@@ -7,7 +7,7 @@ import httpx
 
 from app.core.config import GoogleConfig
 from app.core.event_dispatcher import EventDispatcher
-from app.events.event_models import CarArrived, CarDetected, CarLeft
+from app.events.event_models import CarArrived, CarDetected, CarLeft, CarUpdated
 from app.tracking.vehicle import Vehicle
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def _vehicle_payload(vehicle: Vehicle) -> dict[str, Any]:
 class GoogleAppsScriptClient:
     def __init__(self, config: GoogleConfig, client: httpx.AsyncClient | None = None) -> None:
         self.config = config
-        self._client = client or httpx.AsyncClient(timeout=15)
+        self._client = client or httpx.AsyncClient(timeout=15, follow_redirects=True)
         self._owns_client = client is None
 
     async def close(self) -> None:
@@ -40,23 +40,18 @@ class GoogleAppsScriptClient:
         if not self.config.apps_script_url:
             raise RuntimeError("Google Apps Script URL is not configured")
         try:
-            if payload is None:
-                response = await self._client.get(
-                    self.config.apps_script_url,
-                    params={"action": action, "token": self.config.api_token},
-                )
-            else:
-                response = await self._client.post(
-                    self.config.apps_script_url,
-                    json={**payload, "action": action, "token": self.config.api_token},
-                )
+            response = await self._client.post(
+                self.config.apps_script_url,
+                json={**(payload or {}), "action": action, "token": self.config.api_token},
+            )
             response.raise_for_status()
             result = response.json()
         except (httpx.HTTPError, ValueError) as error:
             logger.error("Google Apps Script %s request failed: %s", action, error)
             raise
         if isinstance(result, dict) and result.get("error"):
-            raise RuntimeError(f"Google Apps Script rejected {action}: {result['error']}")
+            logger.error("Google Apps Script rejected %s: %s", action, result["error"])
+            raise RuntimeError(f"Google Apps Script rejected {action}")
         return result
 
     async def get_current_cars(self) -> Any:
@@ -78,6 +73,12 @@ class GoogleAppsScriptClient:
             {"event_id": event.event_id, "vehicle": _vehicle_payload(event.vehicle)},
         )
 
+    async def on_updated(self, event: CarUpdated) -> None:
+        await self._request(
+            "update_car",
+            {"event_id": event.event_id, "vehicle": _vehicle_payload(event.vehicle)},
+        )
+
     async def on_left(self, event: CarLeft) -> None:
         await self._request(
             "register_departure",
@@ -91,4 +92,5 @@ class GoogleAppsScriptClient:
     def subscribe(self, dispatcher: EventDispatcher) -> None:
         dispatcher.subscribe(CarArrived, self.on_arrived)
         dispatcher.subscribe(CarDetected, self.on_detected)
+        dispatcher.subscribe(CarUpdated, self.on_updated)
         dispatcher.subscribe(CarLeft, self.on_left)

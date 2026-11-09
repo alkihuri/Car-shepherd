@@ -1,0 +1,31 @@
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+cameras:
+  - id: "camera_01"
+    name: "Detailing Camera 1"
+    enabled: true
+    scan_interval: 30
+    stream_url: "${CAMERA_01_RTSP_URL}"
+  - id: "camera_02"
+    name: "Detailing Camera 2"
+    enabled: true
+    scan_interval: 30
+    stream_url: "${CAMERA_02_RTSP_URL}"
+
+google:
+  apps_script_url: "${GOOGLE_APPS_SCRIPT_URL}"
+  api_token: "${GOOGLE_APPS_SCRIPT_TOKEN}"
+
+tracking:
+  scan_interval: 30
+  departure_timeout: 300
+
+recognition:
+  confidence_threshold: 0.8
+  plugin: ""
+
+telegram:
+  enabled: false
+  bot_token: "${TELEGRAM_BOT_TOKEN}"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import os
 import re
 from pathlib import Path
@@ -22,7 +23,7 @@ class CameraConfig(BaseModel):
     name: str
     stream_url: str = ""
     enabled: bool = True
-    scan_interval: int | None = None
+    scan_interval: int | None = Field(default=None, gt=0)
 
 
 class GoogleConfig(BaseModel):
@@ -37,6 +38,7 @@ class TrackingConfig(BaseModel):
 
 class RecognitionConfig(BaseModel):
     confidence_threshold: float = Field(default=0.8, ge=0, le=1)
+    plugin: str = ""
 
 
 class TelegramConfig(BaseModel):
@@ -96,3 +98,18 @@ def load_config(path: str | Path = "config.yaml") -> AppConfig:
     _load_dotenv(config_path.parent / ".env")
     data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
     return AppConfig.model_validate(_expand_env(data))
+
+
+def load_recognizer(config: AppConfig) -> Any:
+    if not config.recognition.plugin:
+        from app.recognition.plate_recognizer import UnavailablePlateRecognizer
+
+        return UnavailablePlateRecognizer()
+    module_name, separator, class_name = config.recognition.plugin.partition(":")
+    if not separator or not module_name or not class_name:
+        raise ValueError("recognition.plugin must use the 'python.module:RecognizerClass' format")
+    recognizer_type = getattr(importlib.import_module(module_name), class_name)
+    recognizer = recognizer_type()
+    if not callable(getattr(recognizer, "recognize", None)):
+        raise TypeError("Configured recognizer must define recognize(image, camera_id)")
+    return recognizer

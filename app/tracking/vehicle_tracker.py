@@ -27,6 +27,12 @@ class VehicleTracker:
     def current_vehicles(self) -> tuple[Vehicle, ...]:
         return tuple(self._vehicles.values())
 
+    def restore(self, vehicle: Vehicle) -> None:
+        plate = vehicle.plate_number.strip().upper()
+        if plate:
+            vehicle.plate_number = plate
+            self._vehicles[plate] = vehicle
+
     async def update(
         self,
         detections: Iterable[Detection],
