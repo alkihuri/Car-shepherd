@@ -4,6 +4,7 @@ function testWorkflow() {
     registerArrival_("BRDG491", {
       plate_number: "BRDG491",
       vehicle_make: "Toyota",
+      vehicle_coloe : "Red",
       owner_name: "John",
       owner_surname: "Doe",
       first_seen: new Date().toISOString()
@@ -13,6 +14,7 @@ function testWorkflow() {
     updateCar_("BRDG491", {
       plate_number: "BRDG491",
       vehicle_make: "Toyota",
+      vehicle_coloe : "Red",
       owner_name: "John",
       owner_surname: "Doe",
       last_seen: new Date().toISOString()

@@ -2,9 +2,9 @@ function doGet(e) {
   try {
     const request = e && e.parameter ? e.parameter : {};
     //authorize_(request.token);
-   // if (request.action === "get_current_cars") {
-   //   return jsonResponse_({ cars: getCurrentCars_() });
-   // }
+    if (request.action === "get_current_cars") {
+      return jsonResponse_({ cars: getCurrentCars_() });
+    }
     if (request.action === "get_config") {
       return jsonResponse_({ config: getConfig_() });
     }
@@ -24,7 +24,7 @@ function doPost(e) {
     if (request.action === "get_config") {
       return jsonResponse_({ config: getConfig_() });
     }
-    validateEvent_(request);
+    //validateEvent_(request);
     return withScriptLock_(function () {
       if (isProcessed_(request.event_id)) {
         return jsonResponse_({ ok: true, duplicate: true });
