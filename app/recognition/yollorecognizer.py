@@ -57,6 +57,7 @@ class YolloRecognizer:
                         camera_id=camera_id,
                         color=color,
                         fingerprint=fingerprint,
+                        bbox=(x1, y1, x2, y2),
                     )
                 )
 

@@ -33,6 +33,7 @@ class StreamReader:
         self._last_frame_at: datetime | None = None
         self._connected = False
         self._thread: threading.Thread | None = None
+        self._detections: list = []
 
     def start(self) -> None:
         if not self.enabled or self._thread is not None:
@@ -48,6 +49,14 @@ class StreamReader:
     def get_frame(self) -> np.ndarray | None:
         with self._lock:
             return None if self._frame is None else self._frame.copy()
+
+    def set_detections(self, detections: list) -> None:
+        with self._lock:
+            self._detections = list(detections)
+
+    def get_detections(self) -> list:
+        with self._lock:
+            return list(self._detections)
 
     def status(self) -> CameraStatus:
         with self._lock:

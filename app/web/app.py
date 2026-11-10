@@ -11,6 +11,28 @@ from app.cameras.camera_manager import CameraManager
 from app.tracking.vehicle_tracker import VehicleTracker
 
 
+_BOX_COLOR = (0, 255, 0)
+_FONT = cv2.FONT_HERSHEY_SIMPLEX
+
+
+def _annotate(frame, detections) -> None:
+    """Draw vehicle boxes in place; plate text goes in the box's top-right corner."""
+    for detection in detections:
+        if detection.bbox is None:
+            continue
+        x1, y1, x2, y2 = detection.bbox
+        cv2.rectangle(frame, (x1, y1), (x2, y2), _BOX_COLOR, 2)
+        if not detection.plate_number:
+            continue
+        text = detection.plate_number
+        (text_w, text_h), baseline = cv2.getTextSize(text, _FONT, 0.6, 2)
+        label_right = x2
+        label_left = max(label_right - text_w - 8, 0)
+        label_bottom = y1 + text_h + baseline + 8
+        cv2.rectangle(frame, (label_left, y1), (label_right, label_bottom), _BOX_COLOR, -1)
+        cv2.putText(frame, text, (label_left + 4, y1 + text_h + 4), _FONT, 0.6, (0, 0, 0), 2)
+
+
 _INDEX = """<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -101,6 +123,7 @@ def create_app(camera_manager: CameraManager, tracker: VehicleTracker) -> FastAP
                 if frame is None:
                     await asyncio.sleep(0.2)
                     continue
+                _annotate(frame, reader.get_detections())
                 encoded, buffer = cv2.imencode(".jpg", frame)
                 if encoded:
                     yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + buffer.tobytes() + b"\r\n"

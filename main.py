@@ -115,6 +115,7 @@ async def _scan_loop(
                     recognizer.recognize, frame, camera_id
                 )
                 detections.extend(camera_detections)
+                camera_manager.readers[camera_id].set_detections(camera_detections)
                 if camera_detections:
                     logger.info(
                         "Recognized %d vehicle(s) on camera %s",

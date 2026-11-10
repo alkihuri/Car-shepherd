@@ -9,7 +9,6 @@ class Vehicle:
     plate_number: str
     first_seen: datetime
     last_seen: datetime
-    color: tuple[int, int, int] | None = None
     camera_ids: set[str] = field(default_factory=set)
     vehicle_make: str | None = None
     owner_name: str | None = None
@@ -25,3 +24,4 @@ class Detection:
     camera_id: str
     color: tuple[int, int, int] | None = None
     fingerprint: str | None = None
+    bbox: tuple[int, int, int, int] | None = None
