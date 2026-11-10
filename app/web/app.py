@@ -24,7 +24,7 @@ th,td{text-align:left;padding:.5rem;border-bottom:1px solid #ddd}
 </style></head>
 <body><h1>Detailing Centre Monitor</h1><p id="count"></p>
 <section id="cameras" class="cameras"></section><h2>Cars on site</h2>
-<table><thead><tr><th>Plate</th><th>Make</th><th>Arrived</th><th>Last seen</th><th>Duration</th></tr></thead>
+<table><thead><tr><th>Plate</th><th>Color</th><th>Make</th><th>Arrived</th><th>Last seen</th><th>Duration</th></tr></thead>
 <tbody id="cars"></tbody></table>
 <script>
 const fmt=v=>v?new Date(v).toLocaleString():"—";
@@ -35,11 +35,20 @@ async function refresh(){
  <p class="${c.connected?'online':'offline'}">${c.connected?'Connected':'Disconnected'} · Last frame: ${fmt(c.last_frame_at)}</p>
  ${c.enabled?`<img src="/video/${encodeURIComponent(c.camera_id)}" alt="${esc(c.name)} stream">`:'<p>Disabled</p>'}</article>`).join('');
  document.querySelector('#count').textContent=`${cars.length} car(s) on site`;
- document.querySelector('#cars').innerHTML=cars.map(c=>`<tr><td>${esc(c.plate_number)}</td><td>${esc(c.vehicle_make)||'—'}</td>
+ document.querySelector('#cars').innerHTML=cars.map(c=>`<tr><td>${esc(c.plate_number)}</td>
+ <td>${c.color?`<span title="${esc(c.color)}" style="display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid #888;background:${esc(c.color)}"></span>`:'—'}</td>
+ <td>${esc(c.vehicle_make)||'—'}</td>
  <td>${fmt(c.first_seen)}</td><td>${fmt(c.last_seen)}</td><td>${Math.max(0,Math.floor((Date.now()-new Date(c.first_seen))/60000))} min</td></tr>`).join('');
 }
 refresh();setInterval(refresh,5000);
 </script></body></html>"""
+
+
+def _hex_color(color: tuple[int, int, int] | None) -> str | None:
+    if color is None:
+        return None
+    r, g, b = color
+    return f"#{r:02x}{g:02x}{b:02x}"
 
 
 def create_app(camera_manager: CameraManager, tracker: VehicleTracker) -> FastAPI:
@@ -75,6 +84,7 @@ def create_app(camera_manager: CameraManager, tracker: VehicleTracker) -> FastAP
                 "last_seen": vehicle.last_seen.isoformat(),
                 "duration_seconds": int((now - vehicle.first_seen).total_seconds()),
                 "camera_ids": sorted(vehicle.camera_ids),
+                "color": _hex_color(vehicle.color),
             }
             for vehicle in tracker.current_vehicles
         ]

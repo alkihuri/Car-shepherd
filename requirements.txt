@@ -5,4 +5,5 @@ pydantic>=2.12        # версии с pyo3, поддерживающим 3.14
 PyYAML==6.0.2
 uvicorn==0.34.2
 pytest==8.3.5
-easyocr
+easyocr==1.7.2
+ultralytics==8.0.20

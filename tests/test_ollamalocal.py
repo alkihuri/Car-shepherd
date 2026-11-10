@@ -6,9 +6,12 @@ os.environ['NO_PROXY'] = 'localhost,127.0.0.1,::1'
 from app.recognition.qwenlocalrecognizer import OllamaRecognizer
 # This finds the directory of the current script and points to 'test.png' next to it
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-image_path = os.path.join(SCRIPT_DIR, "test.png")
+image_path = os.path.join(SCRIPT_DIR, "test2.png")
  
 image = cv2.imread(image_path)
+
+# reduce image size for faster processing
+#image = cv2.resize(image, (200, 200))
 if image is None:
     raise ValueError(f"Failed to load image from {image_path}")
 

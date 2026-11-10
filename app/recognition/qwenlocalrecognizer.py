@@ -44,7 +44,7 @@ class OllamaRecognizer:
             "stream": False,
             "format": "json","options": {
             "temperature": 0.0,
-            "num_ctx": 1024  # или 2048, не больше 4096
+            "num_ctx": 2048  # или 2048, не больше 4096
 },
         }
 

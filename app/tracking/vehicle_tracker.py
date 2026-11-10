@@ -10,6 +10,22 @@ from app.tracking.vehicle import Detection, Vehicle
 
 logger = logging.getLogger(__name__)
 
+NO_PLATE_LABEL = "нет номера"
+NO_PLATE_KEY_PREFIX = "NO_PLATE:"
+
+
+def _tracking_key(detection: Detection, confidence_threshold: float) -> str | None:
+    plate = detection.plate_number.strip().upper()
+    if plate and detection.confidence >= confidence_threshold:
+        return plate
+    if detection.fingerprint:
+        return f"{NO_PLATE_KEY_PREFIX}{detection.fingerprint}"
+    return None
+
+
+def _display_plate(key: str) -> str:
+    return NO_PLATE_LABEL if key.startswith(NO_PLATE_KEY_PREFIX) else key
+
 
 class VehicleTracker:
     def __init__(
@@ -41,38 +57,44 @@ class VehicleTracker:
     ) -> None:
         observed_at = now or datetime.now(timezone.utc)
         accepted: dict[str, set[str]] = {}
+        colors: dict[str, tuple[int, int, int]] = {}
         for detection in detections:
-            plate = detection.plate_number.strip().upper()
-            if not plate or detection.confidence < self.confidence_threshold:
+            key = _tracking_key(detection, self.confidence_threshold)
+            if key is None:
                 continue
-            accepted.setdefault(plate, set()).add(detection.camera_id)
+            accepted.setdefault(key, set()).add(detection.camera_id)
+            if detection.color is not None:
+                colors[key] = detection.color
 
-        for plate, camera_ids in accepted.items():
-            vehicle = self._vehicles.get(plate)
+        for key, camera_ids in accepted.items():
+            vehicle = self._vehicles.get(key)
             if vehicle is None:
                 vehicle = Vehicle(
-                    plate_number=plate,
+                    plate_number=_display_plate(key),
                     first_seen=observed_at,
                     last_seen=observed_at,
                     camera_ids=set(camera_ids),
+                    color=colors.get(key),
                 )
-                self._vehicles[plate] = vehicle
-                logger.info("Vehicle arrived: %s", plate)
+                self._vehicles[key] = vehicle
+                logger.info("Vehicle arrived: %s", vehicle.plate_number)
                 await self.dispatcher.dispatch(CarArrived(vehicle))
             else:
                 vehicle.last_seen = observed_at
                 vehicle.camera_ids.update(camera_ids)
+                if key in colors:
+                    vehicle.color = colors[key]
                 await self.dispatcher.dispatch(CarDetected(vehicle))
 
         if not available_camera_ids:
             return
 
         departure_cutoff = observed_at - timedelta(seconds=self.departure_timeout)
-        for plate, vehicle in tuple(self._vehicles.items()):
-            if plate not in accepted and vehicle.last_seen <= departure_cutoff:
+        for key, vehicle in tuple(self._vehicles.items()):
+            if key not in accepted and vehicle.last_seen <= departure_cutoff:
                 vehicle.status = "left"
-                del self._vehicles[plate]
-                logger.info("Vehicle left: %s", plate)
+                del self._vehicles[key]
+                logger.info("Vehicle left: %s", vehicle.plate_number)
                 await self.dispatcher.dispatch(CarLeft(vehicle, observed_at))
 
     async def update_vehicle(
