@@ -3,6 +3,7 @@ from pathlib import Path
 import easyocr
 import numpy as np
 from ultralytics import YOLO
+import asyncio
 
 from app.tracking.vehicle import Detection
 
@@ -32,7 +33,11 @@ class YolloRecognizer:
                 best_text, best_conf = text.strip().upper(), float(confidence)
         return best_text, best_conf
 
-    def recognize(self, image: np.ndarray, camera_id: str) -> list[Detection]:
+    async def _recognize_ollama(self, car: np.ndarray) -> dict:
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://ollama-lava-model.com/recognize', json={'image': car.tolist()}) as response:
+                return await response.json()
+    async def recognize(self, image: np.ndarray, camera_id: str) -> list[Detection]:
         results = self.model(image, conf=0.4, verbose=False, classes=VEHICLE_CLASSES)
 
         detections: list[Detection] = []
@@ -43,8 +48,13 @@ class YolloRecognizer:
                 car_conf = float(box.conf[0].item())
                 # Crop without drawing on the shared frame
                 car = image[max(y1, 0):y2, max(x1, 0):x2]
+                # get model from ollama lava model
                 if car.size == 0:
                     continue
+
+                # Recognize car model using OllamaRecognizer
+                ollama_recognizer = OllamaRecognizer()
+                model_info = await ollama_recognizer.recognize(car, camera_id)
 
                 color, fingerprint = self._color_fingerprint(car)
                 # Plate is optional: cars without a readable plate keep their fingerprint
@@ -58,8 +68,8 @@ class YolloRecognizer:
                         color=color,
                         fingerprint=fingerprint,
                         bbox=(x1, y1, x2, y2),
+                        model_info=model_info  # Add model information to Detection
                     )
                 )
 
         return detections
-  

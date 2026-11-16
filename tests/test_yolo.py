@@ -1,7 +1,9 @@
+import asyncio
 import os
 import cv2
 from ultralytics import YOLO
-import easyocr
+import easyocr 
+from app.recognition.ollama_recognize_tool import OllamaCarRecognizer
 
 # ---------- 1. Модель для детекции МАШИН ----------
 # yolov8n.pt — официальные веса, скачаются автоматически при первом запуске.
@@ -22,7 +24,7 @@ print(f"[INFO] Модель загружена: {model_path}")
 reader = easyocr.Reader(['en'], gpu=True)
 
 # ---------- 3. Кадр ----------
-image_path = "tests/test3.png"
+image_path = "tests/test3.jpeg"
 image = cv2.imread(image_path)
 if image is None:
     raise FileNotFoundError(f"Не удалось загрузить изображение: {image_path}")
@@ -48,19 +50,33 @@ if not vehicle_boxes:
 
 print(f"[INFO] Найдено машин: {len(vehicle_boxes)}")
 
+ollama_recognizer = OllamaCarRecognizer()
 # ---------- 5. Для каждой машины: кроп → OCR ----------
 for idx, (vx1, vy1, vx2, vy2, cls_id, conf) in enumerate(vehicle_boxes, 1):
+
+ 
     # Рисуем рамку машины
-    cv2.rectangle(image, (vx1, vy1), (vx2, vy2), (255, 0, 0), 2)
+    cv2.rectangle(image, (vx1, vy1), (vx2, vy2), (0, 0, 255), 2)
     label = f"vehicle {idx} (cls={cls_id}, {conf:.2f})"
     cv2.putText(image, label, (vx1, max(vy1 - 10, 15)),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
     # Кроп машины
     car_crop = image[vy1:vy2, vx1:vx2]
+
+    
+
     if car_crop.size == 0:
         continue
-
+ 
+    # ---------- 5.1. Распознавание машины с помощью Ollama ---------- цвет и модель
+    infos = asyncio.run(ollama_recognizer.recognize(car_crop, "camera_id"))
+    print(f"[INFO] Машина {idx}: raw recognition result: {infos}")
+    if infos:
+        for info in infos:
+            print(f"[INFO] Машина {idx}: модель {info.get('model')}, цвет {info.get('color')}")
+    else:
+        print(f"[INFO] Машина {idx}: информация о модели не найдена")
     # ---------- 5a. Внутри машины ищем номер ----------
     # Вариант "в лоб": прогоняем OCR по всему кропу машины.
     # Он найдёт весь текст (включая надписи на кузове), поэтому фильтруем по длине/формату.
@@ -85,7 +101,10 @@ for idx, (vx1, vy1, vx2, vy2, cls_id, conf) in enumerate(vehicle_boxes, 1):
     print(f"[{idx}] Машина {idx}: найден номер '{plate_text}' (OCR conf={plate_conf:.2f})")
 
     # Рисуем найденный номер на исходном изображении (координаты относительно машины)
-    px1, py1, px2, py2 = map(int, plate_bbox[0])
+    # СТАЛО (работает):
+    xs = [int(p[0]) for p in plate_bbox]
+    ys = [int(p[1]) for p in plate_bbox]
+    px1, py1, px2, py2 = min(xs), min(ys), max(xs), max(ys)
     # Переводим координаты из кропа машины в координаты исходного изображения
     gx1, gy1 = vx1 + px1, vy1 + py1
     gx2, gy2 = vx1 + px2, vy1 + py2
