@@ -98,17 +98,14 @@ def load_config(path: str | Path = "config.yaml") -> AppConfig:
     _load_dotenv(config_path.parent / ".env")
     data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
 
-    #debug print loaded data
-    print("DATA CONFIG:", data)
+    #debug print loaded data 
 
     return AppConfig.model_validate(_expand_env(data))
 
-
+ 
 def load_recognizer(config: AppConfig) -> Any:
-    if not config.recognition.plugin:
-        from app.recognition.plate_recognizer import UnavailablePlateRecognizer
-
-        return UnavailablePlateRecognizer()
+    if not config.recognition.plugin:   
+        raise ValueError("recognition.plugin is not configured")
     module_name, separator, class_name = config.recognition.plugin.partition(":")
     if not separator or not module_name or not class_name:
         raise ValueError("recognition.plugin must use the 'python.module:RecognizerClass' format")

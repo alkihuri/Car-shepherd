@@ -32,6 +32,7 @@ class GoogleAppsScriptClient:
     def __init__(self, config: GoogleConfig, client: httpx.AsyncClient | None = None) -> None:
         self.config = config
         self._client = client or httpx.AsyncClient(timeout=15, follow_redirects=True)
+        #turn of logging for httpx 
         self._owns_client = client is None
 
     async def close(self) -> None:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 import os
-
-from app.recognition.yollorecognizer import YolloRecognizer
+ 
 os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
 import asyncio
 import logging
@@ -16,8 +15,7 @@ from app.core.event_dispatcher import EventDispatcher
 from app.core.logger import configure_logging
 from app.events.event_models import RecognitionFailed
 from app.integrations.google_apps_script import GoogleAppsScriptClient
-from app.integrations.telegram_service import TelegramNotificationService
-from app.recognition.plate_recognizer import RecognitionNotConfigured
+from app.integrations.telegram_service import TelegramNotificationService 
 from app.tracking.vehicle import Vehicle
 from app.tracking.vehicle_tracker import VehicleTracker
 from app.web.app import create_app
@@ -204,6 +202,7 @@ async def run(config: AppConfig) -> None:
 
 
 def main() -> None:
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     configure_logging()
     config = load_config()
     logger.info("Starting detailing-centre surveillance application")

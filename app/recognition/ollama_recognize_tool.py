@@ -89,4 +89,7 @@ class OllamaCarRecognizer:
                     "color": color
                 })
 
+
+        print(f"[OllamaRecognizer] LLM MODEL {self.model} Results: {results}")
+
         return results

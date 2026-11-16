@@ -24,7 +24,7 @@ print(f"[INFO] Модель загружена: {model_path}")
 reader = easyocr.Reader(['en'], gpu=True)
 
 # ---------- 3. Кадр ----------
-image_path = "tests/test3.jpeg"
+image_path = "tests/test5.jpeg"
 image = cv2.imread(image_path)
 if image is None:
     raise FileNotFoundError(f"Не удалось загрузить изображение: {image_path}")
