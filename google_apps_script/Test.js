@@ -42,7 +42,7 @@ function testWorkflow() {
 
  
 
-function registerArrival_(plateNumber, vehicle) {
+function registerArrival_Test(plateNumber, vehicle) {
   var sheet = getOrCreateSheet_("Current Cars", CURRENT_CARS_HEADERS);
   var row = findPlateRow_(sheet, plateNumber);
   var values = currentCarRow_(vehicle);
