@@ -11,6 +11,7 @@ class Vehicle:
     last_seen: datetime
     camera_ids: set[str] = field(default_factory=set)
     vehicle_make: str | None = None
+    detected_make: str | None = None
     owner_name: str | None = None
     owner_surname: str | None = None
     status: str = "present"
@@ -25,3 +26,4 @@ class Detection:
     color: tuple[int, int, int] | None = None
     fingerprint: str | None = None
     bbox: tuple[int, int, int, int] | None = None
+    make: str | None = None

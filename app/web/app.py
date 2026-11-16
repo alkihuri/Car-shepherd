@@ -16,21 +16,32 @@ _FONT = cv2.FONT_HERSHEY_SIMPLEX
 
 
 def _annotate(frame, detections) -> None:
-    """Draw vehicle boxes in place; plate text goes in the box's top-right corner."""
+    """Draw vehicle boxes in place; plate text goes in the box's top-right corner, make below."""
     for detection in detections:
         if detection.bbox is None:
             continue
         x1, y1, x2, y2 = detection.bbox
         cv2.rectangle(frame, (x1, y1), (x2, y2), _BOX_COLOR, 2)
-        if not detection.plate_number:
+        
+        labels = []
+        if detection.plate_number:
+            labels.append(detection.plate_number)
+        if detection.make and detection.make != "unknown":
+            labels.append(detection.make)
+        
+        if not labels:
             continue
-        text = detection.plate_number
-        (text_w, text_h), baseline = cv2.getTextSize(text, _FONT, 0.6, 2)
-        label_right = x2
-        label_left = max(label_right - text_w - 8, 0)
-        label_bottom = y1 + text_h + baseline + 8
-        cv2.rectangle(frame, (label_left, y1), (label_right, label_bottom), _BOX_COLOR, -1)
-        cv2.putText(frame, text, (label_left + 4, y1 + text_h + 4), _FONT, 0.6, (0, 0, 0), 2)
+        
+        # Render multiple labels stacked in top-right corner
+        y_offset = y1
+        for label_text in labels:
+            (text_w, text_h), baseline = cv2.getTextSize(label_text, _FONT, 0.6, 2)
+            label_right = x2
+            label_left = max(label_right - text_w - 8, 0)
+            label_bottom = y_offset + text_h + baseline + 8
+            cv2.rectangle(frame, (label_left, y_offset), (label_right, label_bottom), _BOX_COLOR, -1)
+            cv2.putText(frame, label_text, (label_left + 4, y_offset + text_h + 4), _FONT, 0.6, (0, 0, 0), 2)
+            y_offset = label_bottom
 
 
 _INDEX = """<!doctype html>
@@ -99,7 +110,7 @@ def create_app(camera_manager: CameraManager, tracker: VehicleTracker) -> FastAP
         return [
             {
                 "plate_number": vehicle.plate_number,
-                "vehicle_make": vehicle.vehicle_make,
+                "vehicle_make": vehicle.vehicle_make or vehicle.detected_make,
                 "owner_name": vehicle.owner_name,
                 "owner_surname": vehicle.owner_surname,
                 "first_seen": vehicle.first_seen.isoformat(),

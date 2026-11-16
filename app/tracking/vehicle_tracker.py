@@ -58,6 +58,7 @@ class VehicleTracker:
         observed_at = now or datetime.now(timezone.utc)
         accepted: dict[str, set[str]] = {}
         colors: dict[str, tuple[int, int, int]] = {}
+        makes: dict[str, str] = {}
         for detection in detections:
             key = _tracking_key(detection, self.confidence_threshold)
             if key is None:
@@ -65,6 +66,8 @@ class VehicleTracker:
             accepted.setdefault(key, set()).add(detection.camera_id)
             if detection.color is not None:
                 colors[key] = detection.color
+            if detection.make and detection.make != "unknown":
+                makes[key] = detection.make
 
         for key, camera_ids in accepted.items():
             vehicle = self._vehicles.get(key)
@@ -75,6 +78,7 @@ class VehicleTracker:
                     last_seen=observed_at,
                     camera_ids=set(camera_ids),
                     color=colors.get(key),
+                    detected_make=makes.get(key),
                 )
                 self._vehicles[key] = vehicle
                 logger.info("Vehicle arrived: %s", vehicle.plate_number)
@@ -84,6 +88,8 @@ class VehicleTracker:
                 vehicle.camera_ids.update(camera_ids)
                 if key in colors:
                     vehicle.color = colors[key]
+                if key in makes and not vehicle.detected_make:
+                    vehicle.detected_make = makes[key]
                 await self.dispatcher.dispatch(CarDetected(vehicle))
 
         if not available_camera_ids:

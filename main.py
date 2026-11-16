@@ -1,9 +1,12 @@
 from __future__ import annotations
 import os
+
+from app.recognition.yollorecognizer import YolloRecognizer
 os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
 import asyncio
 import logging
 from datetime import datetime, timezone
+from typing import Any
 
 import uvicorn
 
@@ -14,7 +17,7 @@ from app.core.logger import configure_logging
 from app.events.event_models import RecognitionFailed
 from app.integrations.google_apps_script import GoogleAppsScriptClient
 from app.integrations.telegram_service import TelegramNotificationService
-from app.recognition.plate_recognizer import PlateRecognizer, RecognitionNotConfigured
+from app.recognition.plate_recognizer import RecognitionNotConfigured
 from app.tracking.vehicle import Vehicle
 from app.tracking.vehicle_tracker import VehicleTracker
 from app.web.app import create_app
@@ -83,7 +86,7 @@ async def _refresh_settings(client: GoogleAppsScriptClient, settings: RuntimeSet
 
 async def _scan_loop(
     camera_manager: CameraManager,
-    recognizer: PlateRecognizer,
+    recognizer: YolloRecognizer,
     tracker: VehicleTracker,
     dispatcher: EventDispatcher,
     settings: RuntimeSettings,
@@ -111,9 +114,7 @@ async def _scan_loop(
                 continue
             last_scanned[camera_id] = loop_time
             try:
-                camera_detections = await asyncio.to_thread(
-                    recognizer.recognize, frame, camera_id
-                )
+                camera_detections = await recognizer.recognize(frame, camera_id)
                 detections.extend(camera_detections)
                 camera_manager.readers[camera_id].set_detections(camera_detections)
                 if camera_detections:
